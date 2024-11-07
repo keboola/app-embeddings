@@ -40,7 +40,7 @@ class Component(ComponentBase):
     #     db = lancedb.connect(lance_dir)
     #     schema = self._get_lance_schema(fieldnames)
     #     table = db.create_table("embeddings", schema=schema, mode="overwrite")
-    #     return lance_dir, table
+    #     return lance_dir,
 
     def _process_rows_csv(self, reader):
         output_table = self._get_output_table()
