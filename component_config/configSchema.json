@@ -2,7 +2,6 @@
   "type": "object",
   "title": "Lance Embedder",
   "required": [
-    "embedColumn",
     "#apiKey",
     "model"
   ],
@@ -45,7 +44,7 @@
       "options": {
         "enum_titles": [
           "CSV",
-          "Json"
+          "Keboola_json"
         ]
       },
       "description": "Choose the output format for the embeddings",

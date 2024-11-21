@@ -36,16 +36,36 @@
         }
       },
       "embedColumn": {
-        "type": "string",
-        "title": "Embed column name",
-        "watch": {
-          "columns": "_metadata_.table.columns"
-        },
-        "required": true,
-        "enumSource": "columns",
-        "description": "Choose a column to embed data.",
-        "propertyOrder": 1
-      }
+      "type": "string",
+      "title": "Embed column name",
+      "watch": {
+        "columns": "_metadata_.table.columns"
+      },
+      "required": true,
+      "enumSource": "columns",
+      "description": "Choose a column to embed data.",
+      "propertyOrder": 1
     },
-    "description": "Configuration for embedding column data"
-  }
+    "chunk_method": {
+      "type": "string",
+      "title": "Text Chunking Method",
+      "enum": [
+        "none", 
+        "words", 
+        "characters"
+      ],
+      "default": "none",
+      "description": "Split text into chunks for embedding",
+      "propertyOrder": 2
+    },
+    "chunk_size": {
+      "type": "integer",
+      "title": "Chunk Size",
+      "default": 3,
+      "minimum": 1,
+      "description": "Number of units per chunk",
+      "propertyOrder": 3
+    }
+  },
+  "description": "Configuration for embedding column data"
+}

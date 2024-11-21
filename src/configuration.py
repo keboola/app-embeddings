@@ -42,7 +42,8 @@ class Configuration(ConfigurationBase):
     pswd_apiKey: str
     model: str
     destination: Destination
-    outputFormat: str = "csv"
+    chunk_method: str = "none" 
+    chunk_size: int = 3
 
     def __post_init__(self):
         model_mapping = {
