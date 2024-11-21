@@ -7,4 +7,4 @@ mock==4.0.3
 openai==1.44.1
 pandas==2.2.2
 pyarrow==15.0.0
-ntlk==3.9.1
+nltk==3.9.1
