@@ -37,7 +37,7 @@
     "outputFormat": {
       "enum": [
         "csv",
-        "lance"
+        "json"
       ],
       "type": "string",
       "title": "Output Format",
@@ -45,7 +45,7 @@
       "options": {
         "enum_titles": [
           "CSV",
-          "Lance"
+          "Json"
         ]
       },
       "description": "Choose the output format for the embeddings",
