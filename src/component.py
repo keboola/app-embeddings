@@ -54,11 +54,11 @@ class Component(ComponentBase):
         self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
 
 
-    def get_embedding(text, model="text-embedding-3-small"):
+    def get_embedding(self, text, model="text-embedding-3-small"):
         if not text or not isinstance(text, str) or text.strip() == "":
                 return []
         text = text.replace("\n", " ")
-        return OpenAI.embeddings.create(input = [text], model=model).data[0].embedding
+        return self.client.embeddings.create(input = [text], model=model).data[0].embedding
             
 
     def _get_input_table(self):
