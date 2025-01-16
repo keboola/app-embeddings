@@ -51,7 +51,7 @@ class Component(ComponentBase):
         self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
 
 
-    def get_embedding(self, text, model):
+    def get_embedding(self, text, model = 'text-embedding-3-small'):
         if not text or not isinstance(text, str) or text.strip() == "":
                 return []
         text = text.replace("\n", " ")
