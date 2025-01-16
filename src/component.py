@@ -12,7 +12,7 @@ from keboola.component.base import ComponentBase
 from keboola.component.exceptions import UserException
 from configuration import Configuration
 
-import openai
+from openai import OpenAI
 
 class Component(ComponentBase):
     def __init__(self):
@@ -50,17 +50,15 @@ class Component(ComponentBase):
         self._configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
 
     def init_openai_client(self):
-        openai.api_key = self._configuration.pswd_apiKey
+        self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
 
-    def get_embedding(self, text, model="text-embedding-3-small"):
-        try:
-            if not text or not isinstance(text, str) or text.strip() == "":
+
+    def get_embedding(text, model="text-embedding-3-small"):
+        if not text or not isinstance(text, str) or text.strip() == "":
                 return []
-            text = text.replace("\n", " ")
-            response = openai.Embedding.create(input=text, model=model)
-            return response['data'][0]['embedding']
-        except Exception as e:
-            raise UserException(f"Error getting embedding: {str(e)}")
+        text = text.replace("\n", " ")
+        return OpenAI.embeddings.create(input = [text], model=model).data[0].embedding
+            
 
     def _get_input_table(self):
         if not self.get_input_tables_definitions():
