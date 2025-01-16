@@ -1,7 +1,6 @@
 import csv
 import logging
 
-
 import pyarrow as pa
 import pandas as pd
 
@@ -30,6 +29,7 @@ class Component(ComponentBase):
             raise UserException(f"Error occurred during embedding process: {str(e)}")
 
     def _process_rows_csv(self, reader):
+
         output_table = self._get_output_table()
         with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file:
             fieldnames = reader.fieldnames + ['embedding']
@@ -51,7 +51,7 @@ class Component(ComponentBase):
         self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
 
 
-    def get_embedding(self, text, model="text-embedding-3-small"):
+    def get_embedding(self, text, model):
         if not text or not isinstance(text, str) or text.strip() == "":
                 return []
         text = text.replace("\n", " ")
