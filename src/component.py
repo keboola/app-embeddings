@@ -1,9 +1,6 @@
 import csv
 import logging
-import os
-import shutil
-import zipfile
-import lancedb
+
 
 import pyarrow as pa
 import pandas as pd
