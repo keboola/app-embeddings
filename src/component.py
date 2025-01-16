@@ -12,16 +12,16 @@ from keboola.component.base import ComponentBase
 from keboola.component.exceptions import UserException
 from configuration import Configuration
 
-from openai import OpenAI
+import openai
+
 class Component(ComponentBase):
     def __init__(self):
         super().__init__()
         self._configuration = None
-        self.client = None
 
     def run(self):
         self.init_configuration()
-        self.init_client()
+        self.init_openai_client()
 
         try:
             input_table = self._get_input_table()
@@ -49,21 +49,16 @@ class Component(ComponentBase):
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
         self._configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
 
-    def init_client(self):
-        self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
+    def init_openai_client(self):
+        openai.api_key = self._configuration.pswd_apiKey
 
     def get_embedding(self, text, model="text-embedding-3-small"):
         try:
-            # Check for empty or invalid text
             if not text or not isinstance(text, str) or text.strip() == "":
-                return []  # Return empty list for empty or invalid input
-
-            # Replace newlines in the text with spaces
+                return []
             text = text.replace("\n", " ")
-
-            # Request embeddings from OpenAI API
-            response = self.client.embeddings.create(input=[text], model=model)
-            return response.data[0].embedding
+            response = openai.Embedding.create(input=text, model=model)
+            return response['data'][0]['embedding']
         except Exception as e:
             raise UserException(f"Error getting embedding: {str(e)}")
 
