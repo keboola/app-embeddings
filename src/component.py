@@ -26,7 +26,7 @@ class Component(ComponentBase):
                 reader = csv.DictReader(input_file)
                 self._process_rows_csv(reader)
         except Exception as e:
-            raise UserException(f"Error occurred during embedding process: {str(e)}")
+            raise logging.info(f"Error occurred during embedding process: {str(e)}")
 
     def _process_rows_csv(self, reader):
 
@@ -60,9 +60,9 @@ class Component(ComponentBase):
 
     def _get_input_table(self):
         if not self.get_input_tables_definitions():
-            raise UserException("No input table specified. Please provide one input table in the input mapping!")
+            raise ("No input table specified. Please provide one input table in the input mapping!")
         if len(self.get_input_tables_definitions()) > 1:
-            raise UserException("Only one input table is supported")
+            raise logging.info("Only one input table is supported")
         return self.get_input_tables_definitions()[0]
 
     def _get_output_table(self):
