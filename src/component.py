@@ -18,6 +18,7 @@ class Component(ComponentBase):
     def __init__(self):
         super().__init__()
         self._configuration = None
+        self.client = None
 
     def run(self):
         self.init_configuration()
