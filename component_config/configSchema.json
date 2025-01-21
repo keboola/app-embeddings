@@ -1,11 +1,10 @@
 {
   "type": "object",
-  "title": "Lance Embedder",
+  "title": "OpenAI Embedding",
   "required": [
     "embedColumn",
     "#apiKey",
-    "model",
-    "chunkingEnabled"
+    "model"
   ],
   "properties": {
     "model": {
@@ -37,34 +36,18 @@
     },
     "outputFormat": {
       "enum": [
-        "csv",
-        "lance"
+        "csv"
       ],
       "type": "string",
       "title": "Output Format",
       "default": "csv",
       "options": {
         "enum_titles": [
-          "CSV",
-          "Lance"
+          "CSV"
         ]
       },
       "description": "Choose the output format for the embeddings",
       "propertyOrder": 3
-    },
-    "chunkingEnabled": {
-      "type": "boolean",
-      "title": "Enable Chunking",
-      "default": false,
-      "description": "Enable chunking of input data for embedding.",
-      "propertyOrder": 4
-    },
-    "chunkSize": {
-      "type": "integer",
-      "title": "Chunk Size",
-      "minimum": 1,
-      "description": "Number of rows to process in a single chunk when chunking is enabled.",
-      "propertyOrder": 5
     }
   }
 }
