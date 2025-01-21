@@ -4,7 +4,8 @@
   "required": [
     "embedColumn",
     "#apiKey",
-    "model"
+    "model",
+    "chunkingEnabled"
   ],
   "properties": {
     "model": {
@@ -50,6 +51,20 @@
       },
       "description": "Choose the output format for the embeddings",
       "propertyOrder": 3
+    },
+    "chunkingEnabled": {
+      "type": "boolean",
+      "title": "Enable Chunking",
+      "default": false,
+      "description": "Enable chunking of input data for embedding.",
+      "propertyOrder": 4
+    },
+    "chunkSize": {
+      "type": "integer",
+      "title": "Chunk Size",
+      "minimum": 1,
+      "description": "Number of rows to process in a single chunk when chunking is enabled.",
+      "propertyOrder": 5
     }
   }
 }

@@ -42,6 +42,8 @@ class Configuration(ConfigurationBase):
     pswd_apiKey: str
     model: str
     destination: Destination
+    chunkingEnabled: bool = False
+    chunkSize: int = 1
     outputFormat: str = "csv"
 
     def __post_init__(self):
