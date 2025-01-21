@@ -39,7 +39,7 @@ class Component(ComponentBase):
             for row in reader:
                 self.row_count += 1
                 text = row[self._configuration.embedColumn]
-                embedding = self.get_embedding(text)
+                embedding = self.get_embedding(text, model=self._configuration.model)
                 row['embedding'] = embedding if embedding else "[]"
                 writer.writerow(row)
 
@@ -50,17 +50,15 @@ class Component(ComponentBase):
     def init_openai_client(self):
         self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
 
-
-    def get_embedding(self, text, model = 'text-embedding-3-small'):
+    def get_embedding(self, text, model):
         if not text or not isinstance(text, str) or text.strip() == "":
-                return []
+            return []
         text = text.replace("\n", " ")
-        return self.client.embeddings.create(input = [text], model=model).data[0].embedding
-            
+        return self.client.embeddings.create(input=[text], model=model).data[0].embedding
 
     def _get_input_table(self):
         if not self.get_input_tables_definitions():
-            raise ("No input table specified. Please provide one input table in the input mapping!")
+            raise UserException("No input table specified. Please provide one input table in the input mapping!")
         if len(self.get_input_tables_definitions()) > 1:
             raise logging.info("Only one input table is supported")
         return self.get_input_tables_definitions()[0]
@@ -73,7 +71,6 @@ class Component(ComponentBase):
             out_table_name = f"{out_table_name}.csv"
 
         return self.create_out_table_definition(out_table_name)
-
 
 if __name__ == "__main__":
     try:
