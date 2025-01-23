@@ -35,43 +35,38 @@
         }
       }
     },
-    "embedColumn": {
-      "type": "string",
-      "title": "Embed column name",
-      "watch": {
-        "columns": "_metadata_.table.columns"
-      },
-      "required": true,
-      "enumSource": "columns",
-      "description": "Choose a column to embed data.",
-      "propertyOrder": 1
-    },
-    "chunkingEnabled": {
-      "type": "boolean",
-      "title": "Enable Chunking",
-      "format": "checkbox",
-      "default": false,
-      "description": "Enable chunking of input data for embedding.",
-      "propertyOrder": 2
-    },
-    "chunkSize": {
-      "type": "integer",
-      "title": "Chunk Size",
-      "default": 3,
-      "minimum": 1,
-      "description": "Number of units per chunk",
-      "propertyOrder": 3
-    },
-    "chunkMethod": {
-      "enum": [
-        "words",
-        "characters"
-      ],
-      "type": "string",
-      "title": "Text Chunking Method",
-      "default": "characters",
-      "description": "Split text into chunks for embedding",
-      "propertyOrder": 4
+    "chunking":{
+      "type": "object",
+      "title": "Chunking",
+      "properties": {
+        "is_enabled": {
+          "type": "boolean",
+          "title": "Enable Chunking",
+          "format": "checkbox",
+          "default": false,
+          "description": "Enable chunking of input data for embedding.",
+          "propertyOrder": 2
+        },
+        "size": {
+          "type": "integer",
+          "title": "Chunk Size",
+          "default": 3,
+          "minimum": 1,
+          "description": "Number of units per chunk",
+          "propertyOrder": 3
+        },
+        "method": {
+          "enum": [
+            "words",
+            "characters"
+          ],
+          "type": "string",
+          "title": "Text Chunking Method",
+          "default": "characters",
+          "description": "Split text into chunks for embedding",
+          "propertyOrder": 4
+        }
+      }
     }
   }
 }

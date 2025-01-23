@@ -37,17 +37,19 @@ class Destination(ConfigurationBase):
     primary_keys: str
 
 @dataclass
+class Chunking(ConfigurationBase):
+    is_enabled: bool
+    size: int
+    method: str
+@dataclass
 class Configuration(ConfigurationBase):
-    embedColumn: str
+    embed_column: str
     pswd_apiKey: str
     model: str
     destination: Destination
+    chunking: Chunking
 
-    chunkingEnabled: bool = False
-    chunkSize: int = 1
-    chunkMethod: str = "characters"
-
-    outputFormat: str = "csv"
+    output_format: str = "csv"
 
     def __post_init__(self):
         model_mapping = {
