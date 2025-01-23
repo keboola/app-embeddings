@@ -2,9 +2,28 @@
   "type": "object",
   "title": "Configuration",
   "required": [
-    "embedColumn"
+    "embed_column"
   ],
   "properties": {
+    "chunking_size": {
+      "type": "integer",
+      "title": "Chunk Size",
+      "default": 3,
+      "minimum": 1,
+      "description": "Number of units per chunk",
+      "propertyOrder": 3
+    },
+    "chunking_method": {
+      "enum": [
+        "words",
+        "characters"
+      ],
+      "type": "string",
+      "title": "Text Chunking Method",
+      "default": "characters",
+      "description": "Split text into chunks for embedding",
+      "propertyOrder": 4
+    },
     "destination": {
       "type": "object",
       "title": "Destination",
@@ -35,38 +54,24 @@
         }
       }
     },
-    "chunking":{
-      "type": "object",
-      "title": "Chunking",
-      "properties": {
-        "is_enabled": {
-          "type": "boolean",
-          "title": "Enable Chunking",
-          "format": "checkbox",
-          "default": false,
-          "description": "Enable chunking of input data for embedding.",
-          "propertyOrder": 2
-        },
-        "size": {
-          "type": "integer",
-          "title": "Chunk Size",
-          "default": 3,
-          "minimum": 1,
-          "description": "Number of units per chunk",
-          "propertyOrder": 3
-        },
-        "method": {
-          "enum": [
-            "words",
-            "characters"
-          ],
-          "type": "string",
-          "title": "Text Chunking Method",
-          "default": "characters",
-          "description": "Split text into chunks for embedding",
-          "propertyOrder": 4
-        }
-      }
+    "embed_column": {
+      "type": "string",
+      "title": "Embed column name",
+      "watch": {
+        "columns": "_metadata_.table.columns"
+      },
+      "required": true,
+      "enumSource": "columns",
+      "description": "Choose a column to embed data.",
+      "propertyOrder": 1
+    },
+    "chunking_enabled": {
+      "type": "boolean",
+      "title": "Enable Chunking",
+      "format": "checkbox",
+      "default": false,
+      "description": "Enable chunking of input data for embedding.",
+      "propertyOrder": 2
     }
   }
 }

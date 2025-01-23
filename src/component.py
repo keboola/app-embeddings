@@ -35,7 +35,7 @@ class Component(ComponentBase):
             writer = csv.DictWriter(output_file, fieldnames=fieldnames)
             writer.writeheader()
             self.row_count = 0
-            if self._configuration.chunking.is_enabled:
+            if self._configuration.chunking_enabled:
                 self.chunk_process_rows_csv(reader)
             else:
                 for row in reader:
@@ -46,8 +46,8 @@ class Component(ComponentBase):
                     writer.writerow(row)
 
     def chunk_process_rows_csv(self, reader):
-        chunk_size = self._configuration.chunking.size
-        chunk_method = self._configuration.chunking.method
+        chunk_size = self._configuration.chunking_size
+        chunk_method = self._configuration.chunking_method
         output_table = self._get_output_table()
 
         with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file:
@@ -69,13 +69,10 @@ class Component(ComponentBase):
                 for chunk in chunks:
                     embedding = self.get_embedding(chunk)
                     row_copy = row.copy()
-                    row_copy['embedding'] = embedding if embedding else "[]"
+                    row_copy['embedding'] = embedding if embedding else "[]" # handles empty embeddings
                     row_copy[self._configuration.embed_column] = chunk
                     writer.writerow(row_copy)
                     self.row_count += 1
-
-
-
 
     def init_configuration(self):
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())

@@ -37,17 +37,15 @@ class Destination(ConfigurationBase):
     primary_keys: str
 
 @dataclass
-class Chunking(ConfigurationBase):
-    is_enabled: bool
-    size: int
-    method: str
-@dataclass
 class Configuration(ConfigurationBase):
     embed_column: str
     pswd_apiKey: str
     model: str
     destination: Destination
-    chunking: Chunking
+
+    chunking_enabled: bool
+    chunking_size: int
+    chunking_method: str
 
     output_format: str = "csv"
 
