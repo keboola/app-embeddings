@@ -65,6 +65,7 @@ class Component(ComponentBase):
                 elif chunk_method == "characters":
                     for i in range(0, len(text), chunk_size):
                         chunks.append(text[i:i + chunk_size])
+                        
                 for chunk in chunks:
                     embedding = self.get_embedding(chunk)
                     row_copy = row.copy()
