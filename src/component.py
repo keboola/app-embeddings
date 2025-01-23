@@ -1,5 +1,6 @@
 import csv
 import logging
+import hashlib
 
 import pyarrow as pa
 import pandas as pd
@@ -31,7 +32,7 @@ class Component(ComponentBase):
     def _process_rows_csv(self, reader):
         output_table = self._get_output_table()
         with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file:
-            fieldnames = reader.fieldnames + ['embedding']
+            fieldnames = reader.fieldnames + ['embedding', 'parent_hash']
             writer = csv.DictWriter(output_file, fieldnames=fieldnames)
             writer.writeheader()
             self.row_count = 0
@@ -43,6 +44,7 @@ class Component(ComponentBase):
                     text = row[self._configuration.embed_column]
                     embedding = self.get_embedding(text, model=self._configuration.model)
                     row['embedding'] = embedding if embedding else "[]" # handles empty embeddings
+                    row['parent_hash'] = self.generate_hash(text)
                     writer.writerow(row)
 
     def chunk_process_rows_csv(self, reader):
@@ -51,12 +53,13 @@ class Component(ComponentBase):
         output_table = self._get_output_table()
 
         with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file:
-            fieldnames = reader.fieldnames + ['embedding']
+            fieldnames = reader.fieldnames + ['embedding', 'parent_id']
             writer = csv.DictWriter(output_file, fieldnames=fieldnames)
             writer.writeheader()
             self.row_count = 0
             for row in reader:
                 text = row[self._configuration.embed_column]
+                parent_hash = self.generate_hash(text)
                 chunks = []
                 if chunk_method == "words":
                     words = text.split()
@@ -71,11 +74,12 @@ class Component(ComponentBase):
                     row_copy = row.copy()
                     row_copy['embedding'] = embedding if embedding else "[]"
                     row_copy[self._configuration.embed_column] = chunk
+                    row_copy['parent_id'] = parent_hash
                     writer.writerow(row_copy)
                     self.row_count += 1
 
-
-
+    def generate_hash(self, text):
+        return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
     def init_configuration(self):
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
@@ -106,11 +110,11 @@ class Component(ComponentBase):
 
         return self.create_out_table_definition(out_table_name)
 
-
 if __name__ == "__main__":
     try:
         comp = Component()
         comp.execute_action()
+        logging.getLogger().setLevel(logging.WARNING)
     except UserException as exc:
         logging.exception(exc)
         exit(1)
