@@ -35,19 +35,19 @@ class Component(ComponentBase):
             writer = csv.DictWriter(output_file, fieldnames=fieldnames)
             writer.writeheader()
             self.row_count = 0
-            if self._configuration.chunkingEnabled:
+            if self._configuration.chunking.is_enabled:
                 self.chunk_process_rows_csv(reader)
             else:
                 for row in reader:
                     self.row_count += 1
-                    text = row[self._configuration.embedColumn]
+                    text = row[self._configuration.embed_column]
                     embedding = self.get_embedding(text)
                     row['embedding'] = embedding if embedding else "[]" # handles empty embeddings
                     writer.writerow(row)
 
     def chunk_process_rows_csv(self, reader):
-        chunk_size = self._configuration.chunkSize
-        chunk_method = self._configuration.chunkMethod
+        chunk_size = self._configuration.chunking.size
+        chunk_method = self._configuration.chunking.method
         output_table = self._get_output_table()
 
         with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file:
@@ -56,7 +56,7 @@ class Component(ComponentBase):
             writer.writeheader()
             self.row_count = 0
             for row in reader:
-                text = row[self._configuration.embedColumn]
+                text = row[self._configuration.embed_column]
                 chunks = []
                 if chunk_method == "words":
                     words = text.split()
@@ -70,7 +70,7 @@ class Component(ComponentBase):
                     embedding = self.get_embedding(chunk)
                     row_copy = row.copy()
                     row_copy['embedding'] = embedding if embedding else "[]"
-                    row_copy[self._configuration.embedColumn] = chunk
+                    row_copy[self._configuration.embed_column] = chunk
                     writer.writerow(row_copy)
                     self.row_count += 1
 
