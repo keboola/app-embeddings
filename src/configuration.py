@@ -45,7 +45,7 @@ class Configuration(ConfigurationBase):
 
     chunkingEnabled: bool = False
     chunkSize: int = 1
-    chunkMethod: str 
+    chunkMethod: str = "words"
 
     outputFormat: str = "csv"
 
