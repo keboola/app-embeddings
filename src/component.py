@@ -26,45 +26,55 @@ class Component(ComponentBase):
                 reader = csv.DictReader(input_file)
                 self._process_rows_csv(reader)
         except Exception as e:
-            raise logging.info(f"Error occurred during embedding process: {str(e)}")
+            raise UserException(f"Error occurred during embedding process: {str(e)}")
 
     def _process_rows_csv(self, reader):
-
         output_table = self._get_output_table()
         with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file:
             fieldnames = reader.fieldnames + ['embedding']
             writer = csv.DictWriter(output_file, fieldnames=fieldnames)
             writer.writeheader()
-
             self.row_count = 0
             if self._configuration.chunkingEnabled:
-                chunk = []
-                for row in reader:
-                    self.row_count += 1
-                    text = row[self._configuration.embedColumn]
-                    chunk.append(text)
-
-                    if len(chunk) == self._configuration.chunkSize:
-                        self._process_chunk(chunk, writer, row)
-                        chunk = []
-
-                if chunk:
-                    self._process_chunk(chunk, writer, row)
+                self.chunk_process_rows_csv(reader)
             else:
                 for row in reader:
                     self.row_count += 1
                     text = row[self._configuration.embedColumn]
-                    embedding = self.get_embedding([text])[0]
-                    row['embedding'] = embedding if embedding else "[]"
+                    embedding = self.get_embedding(text)
+                    row['embedding'] = embedding if embedding else "[]" # handles empty embeddings
                     writer.writerow(row)
 
-    def _process_chunk(self, chunk, writer, row_template):
-        embeddings = self.get_embedding(chunk)
+    def chunk_process_rows_csv(self, reader):
+        chunk_size = self._configuration.chunkSize
+        chunk_method = self._configuration.chunkMethod
+        output_table = self._get_output_table()
 
-        for i, embedding in enumerate(embeddings):
-            row = row_template.copy()
-            row['embedding'] = embedding if embedding else "[]"
-            writer.writerow(row)
+        with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file:
+            fieldnames = reader.fieldnames + ['embedding']
+            writer = csv.DictWriter(output_file, fieldnames=fieldnames)
+            writer.writeheader()
+            self.row_count = 0
+            for row in reader:
+                text = row[self._configuration.embedColumn]
+                chunks = []
+                if chunk_method == "words":
+                    words = text.split()
+                    for i in range(0, len(words), chunk_size):
+                        chunks.append(" ".join(words[i:i + chunk_size]))
+                elif chunk_method == "characters":
+                    for i in range(0, len(text), chunk_size):
+                        chunks.append(text[i:i + chunk_size])
+                for chunk in chunks:
+                    embedding = self.get_embedding(chunk)
+                    row_copy = row.copy()
+                    row_copy['embedding'] = embedding if embedding else "[]"
+                    row_copy[self._configuration.embedColumn] = chunk
+                    writer.writerow(row_copy)
+                    self.row_count += 1
+
+
+
 
     def init_configuration(self):
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
@@ -73,19 +83,17 @@ class Component(ComponentBase):
     def init_openai_client(self):
         self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
 
-    def get_embedding(self, texts, model=None):
-        if not texts or not isinstance(texts, list):
-            return []
-        texts = [text.replace("\n", " ") for text in texts if isinstance(text, str) and text.strip()]
-        model = model or self._configuration.model
-        response = self.client.embeddings.create(input=texts, model=model)
-        return [item.embedding for item in response.data]
+    def get_embedding(self, text, model = 'text-embedding-3-small'):
+        if not text or not isinstance(text, str) or text.strip() == "":
+                return []
+        text = text.replace("\n", " ")
+        return self.client.embeddings.create(input = [text], model=model).data[0].embedding
 
     def _get_input_table(self):
         if not self.get_input_tables_definitions():
             raise UserException("No input table specified. Please provide one input table in the input mapping!")
         if len(self.get_input_tables_definitions()) > 1:
-            raise logging.info("Only one input table is supported")
+            raise UserException("Only one input table is supported")
         return self.get_input_tables_definitions()[0]
 
     def _get_output_table(self):
@@ -96,6 +104,7 @@ class Component(ComponentBase):
             out_table_name = f"{out_table_name}.csv"
 
         return self.create_out_table_definition(out_table_name)
+
 
 if __name__ == "__main__":
     try:

@@ -11,7 +11,7 @@
       },
       "then": {
         "properties": {
-          "chunk_method": {
+          "chunkMethod": {
             "enum": [
               "words",
               "characters"
@@ -22,7 +22,7 @@
             "description": "Split text into chunks for embedding",
             "propertyOrder": 3
           },
-          "chunk_size": {
+          "chunkSize": {
             "type": "integer",
             "title": "Chunk Size",
             "default": 3,
