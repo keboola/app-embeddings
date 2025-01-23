@@ -65,7 +65,7 @@ class Component(ComponentBase):
                 elif chunk_method == "characters":
                     for i in range(0, len(text), chunk_size):
                         chunks.append(text[i:i + chunk_size])
-                        
+
                 for chunk in chunks:
                     embedding = self.get_embedding(chunk)
                     row_copy = row.copy()
@@ -100,7 +100,7 @@ class Component(ComponentBase):
     def _get_output_table(self):
         destination_config = self.configuration.parameters['destination']
         if not (out_table_name := destination_config.get("output_table_name")):
-            out_table_name = f"app-embed-lancedb.csv"
+            out_table_name = f"openAI-embedding.csv"
         else:
             out_table_name = f"{out_table_name}.csv"
 

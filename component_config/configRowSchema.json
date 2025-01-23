@@ -1,39 +1,5 @@
 {
   "type": "object",
-  "allOf": [
-    {
-      "if": {
-        "properties": {
-          "chunkingEnabled": {
-            "const": true
-          }
-        }
-      },
-      "then": {
-        "properties": {
-          "chunkMethod": {
-            "enum": [
-              "words",
-              "characters"
-            ],
-            "type": "string",
-            "title": "Text Chunking Method",
-            "default": "words",
-            "description": "Split text into chunks for embedding",
-            "propertyOrder": 3
-          },
-          "chunkSize": {
-            "type": "integer",
-            "title": "Chunk Size",
-            "default": 3,
-            "minimum": 1,
-            "description": "Number of units per chunk",
-            "propertyOrder": 3
-          }
-        }
-      }
-    }
-  ],
   "title": "Configuration",
   "required": [
     "embedColumn"
@@ -87,7 +53,25 @@
       "default": false,
       "description": "Enable chunking of input data for embedding.",
       "propertyOrder": 2
+    },
+    "chunkSize": {
+      "type": "integer",
+      "title": "Chunk Size",
+      "default": 3,
+      "minimum": 1,
+      "description": "Number of units per chunk",
+      "propertyOrder": 3
+    },
+    "chunkMethod": {
+      "enum": [
+        "words",
+        "characters"
+      ],
+      "type": "string",
+      "title": "Text Chunking Method",
+      "default": "characters",
+      "description": "Split text into chunks for embedding",
+      "propertyOrder": 4
     }
-  },
-  "description": "Configuration for embedding column data"
+  }
 }
