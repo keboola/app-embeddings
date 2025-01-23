@@ -35,19 +35,19 @@ class Component(ComponentBase):
             writer = csv.DictWriter(output_file, fieldnames=fieldnames)
             writer.writeheader()
             self.row_count = 0
-            if self._configuration.chunking_enabled:
+            if self._configuration.chunking.is_enabled:
                 self.chunk_process_rows_csv(reader)
             else:
                 for row in reader:
                     self.row_count += 1
                     text = row[self._configuration.embed_column]
-                    embedding = self.get_embedding(text)
+                    embedding = self.get_embedding(text, model=self._configuration.model)
                     row['embedding'] = embedding if embedding else "[]" # handles empty embeddings
                     writer.writerow(row)
 
     def chunk_process_rows_csv(self, reader):
-        chunk_size = self._configuration.chunking_size
-        chunk_method = self._configuration.chunking_method
+        chunk_size = self._configuration.chunking.size
+        chunk_method = self._configuration.chunking.method
         output_table = self._get_output_table()
 
         with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file:
@@ -67,12 +67,15 @@ class Component(ComponentBase):
                         chunks.append(text[i:i + chunk_size])
 
                 for chunk in chunks:
-                    embedding = self.get_embedding(chunk)
+                    embedding = self.get_embedding(chunk, model=self._configuration.model)
                     row_copy = row.copy()
-                    row_copy['embedding'] = embedding if embedding else "[]" # handles empty embeddings
+                    row_copy['embedding'] = embedding if embedding else "[]"
                     row_copy[self._configuration.embed_column] = chunk
                     writer.writerow(row_copy)
                     self.row_count += 1
+
+
+
 
     def init_configuration(self):
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
@@ -81,7 +84,7 @@ class Component(ComponentBase):
     def init_openai_client(self):
         self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
 
-    def get_embedding(self, text, model = 'text-embedding-3-small'):
+    def get_embedding(self, text, model):
         if not text or not isinstance(text, str) or text.strip() == "":
                 return []
         text = text.replace("\n", " ")
