@@ -69,16 +69,13 @@ class Component(ComponentBase):
 
                 linking_data.append({'parent_id': parent_id, self._configuration.embed_column: text})
 
-                # Process batch when it reaches batch size
                 if len(batch_data) >= batch_size:
                     self._process_batch(batch_data, writer)
                     batch_data.clear()
 
-            # Process remaining batch if any
             if batch_data:
                 self._process_batch(batch_data, writer)
 
-            # Write linking table data in batch
             linking_writer.writerows(linking_data)
 
     def _process_batch(self, batch_data, writer):
@@ -107,7 +104,7 @@ class Component(ComponentBase):
             for i in range(0, len(text), chunk_size):
                 chunks.append(text[i:i + chunk_size])
         else:
-            chunks.append(text)  # Default: No chunking
+            chunks.append(text)
 
         return chunks
 
@@ -120,7 +117,7 @@ class Component(ComponentBase):
             return [item.embedding for item in response.data]
         except Exception as e:
             logging.error(f"Failed batch embedding: {e}")
-            return [[] for _ in texts]  # Return empty embeddings in case of failure
+            return [[] for _ in texts]
 
     def generate_hash(self, text):
         return hashlib.sha256(text.encode('utf-8')).hexdigest()
