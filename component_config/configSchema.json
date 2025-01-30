@@ -36,14 +36,16 @@
     },
     "outputFormat": {
       "enum": [
-        "csv"
+        "csv",
+        "archive"
       ],
       "type": "string",
       "title": "Output Format",
       "default": "csv",
       "options": {
         "enum_titles": [
-          "CSV"
+          "CSV",
+          "Archive"
         ]
       },
       "description": "Choose the output format for the embeddings",

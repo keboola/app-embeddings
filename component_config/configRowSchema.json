@@ -68,6 +68,14 @@
         }
       }
     },
+    "batch_size": {
+      "type": "integer",
+      "title": "Batch Size",
+      "required": true,
+      "default": 10,
+      "description": "Number of rows to send in each batch.",
+      "propertyOrder": 5
+    },
     "embed_column": {
       "type": "string",
       "title": "Embed column name",

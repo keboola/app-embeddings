@@ -46,6 +46,7 @@ class Configuration(ConfigurationBase):
     embed_column: str
     pswd_apiKey: str
     model: str
+    batch_size: int
     destination: Destination
     chunking: Chunking
 
