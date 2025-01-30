@@ -1,6 +1,7 @@
 import csv
 import logging
 import hashlib
+
 import pyarrow as pa
 import pandas as pd
 
@@ -9,7 +10,6 @@ from keboola.component.exceptions import UserException
 from configuration import Configuration
 
 from openai import OpenAI
-
 
 class Component(ComponentBase):
     def __init__(self):
@@ -34,53 +34,93 @@ class Component(ComponentBase):
         base_output_name = destination_config.get("output_table_name", "openAI-embedding")
         linking_table_name = f"{base_output_name}-linking.csv"
         return self.create_out_table_definition(linking_table_name)
-
+        
     def _process_rows_csv(self, reader):
         output_table = self._get_output_table()
         linking_table = self._get_linking_table()
 
+        batch_size = self._configuration.batch_size
+        batch_data = []
+        linking_data = []
+
+        fieldnames = reader.fieldnames + ['embedding', 'parent_id']
+        linking_fieldnames = ['parent_id', self._configuration.embed_column]
+
         with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file, \
-                open(linking_table.full_path, 'w', encoding='utf-8', newline='') as linking_file:
-
-            fieldnames = reader.fieldnames + ['embedding', 'parent_id']
-            linking_fieldnames = ['parent_id', self._configuration.embed_column]
-
+             open(linking_table.full_path, 'w', encoding='utf-8', newline='') as linking_file:
+            
             writer = csv.DictWriter(output_file, fieldnames=fieldnames)
             linking_writer = csv.DictWriter(linking_file, fieldnames=linking_fieldnames)
 
             writer.writeheader()
             linking_writer.writeheader()
 
-            self.batch_process_rows_csv(reader, writer, linking_writer)
+            for row in reader:
+                text = row[self._configuration.embed_column]
+                parent_id = self.generate_hash(text)
 
-    def batch_process_rows_csv(self, reader, writer, linking_writer):
-        batch_size = 10  
-        batch_texts = []
-        batch_rows = []
+                if self._configuration.chunking.is_enabled:
+                    chunked_texts = self.chunk_text(text)
+                    for chunk in chunked_texts:
+                        batch_data.append((row.copy(), chunk, parent_id))
 
-        for row in reader:
-            text = row[self._configuration.embed_column]
-            parent_id = self.generate_hash(text)
+                else:
+                    batch_data.append((row, text, parent_id))
 
-            batch_texts.append(text) # O(1)
-            batch_rows.append((row, parent_id))
+                linking_data.append({'parent_id': parent_id, self._configuration.embed_column: text})
 
-            if len(batch_texts) >= batch_size:
-                self.process_batch(batch_texts, batch_rows, writer, linking_writer)
-                batch_texts = []
-                batch_rows = []
+                # Process batch when it reaches batch size
+                if len(batch_data) >= batch_size:
+                    self._process_batch(batch_data, writer)
+                    batch_data.clear()
 
-        if batch_texts:
-            self.process_batch(batch_texts, batch_rows, writer, linking_writer)
+            # Process remaining batch if any
+            if batch_data:
+                self._process_batch(batch_data, writer)
 
-    def process_batch(self, batch_texts, batch_rows, writer, linking_writer):
-        embeddings = self.get_embeddings(batch_texts, model=self._configuration.model)
+            # Write linking table data in batch
+            linking_writer.writerows(linking_data)
 
-        for (row, parent_id), embedding in zip(batch_rows, embeddings):
-            row['embedding'] = embedding if embedding else "[]"
+    def _process_batch(self, batch_data, writer):
+        texts = [text for _, text, _ in batch_data]
+        embeddings = self.get_batch_embeddings(texts)
+
+        for i, (row, text, parent_id) in enumerate(batch_data):
+            row['embedding'] = embeddings[i] if embeddings[i] else "[]"
             row['parent_id'] = parent_id
+            row[self._configuration.embed_column] = text
             writer.writerow(row)
-            linking_writer.writerow({'parent_id': parent_id, self._configuration.embed_column: row[self._configuration.embed_column]})
+
+    def chunk_text(self, text):
+        """
+        Splits text into smaller chunks based on the configured method.
+        """
+        chunk_size = self._configuration.chunking.size
+        chunk_method = self._configuration.chunking.method
+
+        chunks = []
+        if chunk_method == "words":
+            words = text.split()
+            for i in range(0, len(words), chunk_size):
+                chunks.append(" ".join(words[i:i + chunk_size]))
+        elif chunk_method == "characters":
+            for i in range(0, len(text), chunk_size):
+                chunks.append(text[i:i + chunk_size])
+        else:
+            chunks.append(text)  # Default: No chunking
+
+        return chunks
+
+    def get_batch_embeddings(self, texts):
+        """
+        Calls OpenAI embedding API in batch mode.
+        """
+        try:
+            response = self.client.embeddings.create(input=texts, model=self._configuration.model)
+            return [item.embedding for item in response.data]
+        except Exception as e:
+            logging.error(f"Failed batch embedding: {e}")
+            return [[] for _ in texts]  # Return empty embeddings in case of failure
 
     def generate_hash(self, text):
         return hashlib.sha256(text.encode('utf-8')).hexdigest()
@@ -91,15 +131,6 @@ class Component(ComponentBase):
 
     def init_openai_client(self):
         self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
-
-    def get_embeddings(self, texts, model):
-        """Fetch embeddings for a batch of texts"""
-        if not texts:
-            return [[]] * len(texts) 
-        texts = [text.replace("\n", " ") for text in texts if text.strip()]
-        
-        response = self.client.embeddings.create(input=texts, model=model)
-        return [data.embedding for data in response.data]
 
     def _get_input_table(self):
         if not self.get_input_tables_definitions():
@@ -116,7 +147,7 @@ class Component(ComponentBase):
             out_table_name = f"{out_table_name}.csv"
 
         return self.create_out_table_definition(out_table_name)
-
+        
 
 if __name__ == "__main__":
     try:
