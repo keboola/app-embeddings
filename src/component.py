@@ -39,7 +39,7 @@ class Component(ComponentBase):
         output_table = self._get_output_table()
         linking_table = self._get_linking_table()
 
-        batch_size = self._configuration.batch_size
+        batch_size = 10
         batch_data = []
         linking_data = []
 
