@@ -29,37 +29,64 @@ class Component(ComponentBase):
         except Exception as e:
             raise UserException(f"Error occurred during embedding process: {str(e)}")
 
+
+    def _get_linking_table(self):
+        destination_config = self.configuration.parameters['destination']
+        base_output_name = destination_config.get("output_table_name", "openAI-embedding")
+        linking_table_name = f"{base_output_name}-linking.csv"
+        return self.create_out_table_definition(linking_table_name)
+
     def _process_rows_csv(self, reader):
         output_table = self._get_output_table()
-        with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file:
-            fieldnames = reader.fieldnames + ['embedding', 'parent_hash']
+        linking_table = self._get_linking_table()
+
+        with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file, \
+            open(linking_table.full_path, 'w', encoding='utf-8', newline='') as linking_file:
+            
+            fieldnames = reader.fieldnames + ['embedding', 'parent_id']
+            linking_fieldnames = ['parent_id', self._configuration.embed_column]
+
             writer = csv.DictWriter(output_file, fieldnames=fieldnames)
+            linking_writer = csv.DictWriter(linking_file, fieldnames=linking_fieldnames)
+
             writer.writeheader()
+            linking_writer.writeheader()
+
             self.row_count = 0
             if self._configuration.chunking.is_enabled:
-                self.chunk_process_rows_csv(reader)
+                self.chunk_process_rows_csv(reader, linking_writer)
             else:
                 for row in reader:
                     self.row_count += 1
                     text = row[self._configuration.embed_column]
+                    parent_id = self.generate_hash(text)
                     embedding = self.get_embedding(text, model=self._configuration.model)
-                    row['embedding'] = embedding if embedding else "[]" # handles empty embeddings
-                    row['parent_hash'] = self.generate_hash(text)
+
+                    row['embedding'] = embedding if embedding else "[]"
+                    row['parent_id'] = parent_id
                     writer.writerow(row)
 
-    def chunk_process_rows_csv(self, reader):
+                    # Write to linking table
+                    linking_writer.writerow({'parent_id': parent_id, self._configuration.embed_column: text})
+
+
+    def chunk_process_rows_csv(self, reader, linking_writer):
         chunk_size = self._configuration.chunking.size
         chunk_method = self._configuration.chunking.method
+
         output_table = self._get_output_table()
 
         with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file:
             fieldnames = reader.fieldnames + ['embedding', 'parent_id']
             writer = csv.DictWriter(output_file, fieldnames=fieldnames)
             writer.writeheader()
+
             self.row_count = 0
             for row in reader:
                 text = row[self._configuration.embed_column]
-                parent_hash = self.generate_hash(text)
+                parent_id = self.generate_hash(text)
+                linking_writer.writerow({'parent_id': parent_id, self._configuration.embed_column: text})  # Linking entry
+
                 chunks = []
                 if chunk_method == "words":
                     words = text.split()
@@ -74,7 +101,7 @@ class Component(ComponentBase):
                     row_copy = row.copy()
                     row_copy['embedding'] = embedding if embedding else "[]"
                     row_copy[self._configuration.embed_column] = chunk
-                    row_copy['parent_id'] = parent_hash
+                    row_copy['parent_id'] = parent_id
                     writer.writerow(row_copy)
                     self.row_count += 1
 
@@ -109,6 +136,7 @@ class Component(ComponentBase):
             out_table_name = f"{out_table_name}.csv"
 
         return self.create_out_table_definition(out_table_name)
+        
 
 if __name__ == "__main__":
     try:
