@@ -110,10 +110,17 @@ class Component(ComponentBase):
 
     def get_batch_embeddings(self, texts):
         """
-        Calls OpenAI embedding API in batch mode.
+        Calls OpenAI or Azure OpenAI embedding API in batch mode.
         """
         try:
-            response = self.client.embeddings.create(input=texts, model=self._configuration.model)
+            if self._configuration.provider == "openai":
+                response = self.client.embeddings.create(
+                    input=texts, model=self._configuration.model
+                )
+            elif self._configuration.provider == "azure":
+                response = self.client.embeddings.create(
+                    input=texts, deployment_id=self._configuration.azureDeployment
+                )
             return [item.embedding for item in response.data]
         except Exception as e:
             logging.error(f"Failed batch embedding: {e}")
@@ -127,7 +134,13 @@ class Component(ComponentBase):
         self._configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
 
     def init_openai_client(self):
-        self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
+        if self._configuration.provider == "openai":
+            self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
+        elif self._configuration.provider == "azure":
+            self.client = OpenAI(
+                api_key=self._configuration.pswd_apiKey,
+                base_url=f"{self._configuration.azureEndpoint}/openai/deployments/{self._configuration.azureDeployment}"
+            )
 
     def _get_input_table(self):
         if not self.get_input_tables_definitions():

@@ -54,7 +54,7 @@
     "outputFormat": {
       "enum": [
         "csv",
-        "archive"
+        "artifacts"
       ],
       "type": "string",
       "title": "Output Format",
@@ -62,7 +62,7 @@
       "options": {
         "enum_titles": [
           "CSV",
-          "Archive"
+          "Artifacts"
         ]
       },
       "description": "Choose the output format for the embeddings",

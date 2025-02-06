@@ -43,14 +43,19 @@ class Chunking(ConfigurationBase):
     method: str
 @dataclass
 class Configuration(ConfigurationBase):
+    provider: str
     embed_column: str
     pswd_apiKey: str
     model: str
     batch_size: int
     destination: Destination
     chunking: Chunking
-
     output_format: str = "csv"
+
+    # Azure fields
+    azureEndpoint: str = ""
+    azureDeployment: str = ""
+
 
     def __post_init__(self):
         model_mapping = {
