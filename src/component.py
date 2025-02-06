@@ -119,7 +119,7 @@ class Component(ComponentBase):
                 )
             elif self._configuration.provider == "azure":
                 response = self.client.embeddings.create(
-                    input=texts, deployment_id=self._configuration.azureDeployment
+                    input=texts, model=self._configuration.model
                 )
             return [item.embedding for item in response.data]
         except Exception as e:
