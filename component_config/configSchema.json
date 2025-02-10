@@ -3,8 +3,7 @@
   "title": "Lance Embedder",
   "required": [
     "embedColumn",
-    "#apiKey",
-    "model"
+    "#apiKey"
   ],
   "properties": {
     "model": {
@@ -36,16 +35,14 @@
     },
     "outputFormat": {
       "enum": [
-        "csv",
-        "json"
+        "csv"
       ],
       "type": "string",
       "title": "Output Format",
       "default": "csv",
       "options": {
         "enum_titles": [
-          "CSV",
-          "Json"
+          "CSV"
         ]
       },
       "description": "Choose the output format for the embeddings",
