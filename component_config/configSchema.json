@@ -1,11 +1,27 @@
 {
   "type": "object",
-  "title": "Lance Embedder",
+  "title": "OpenAI Embedding",
   "required": [
     "embedColumn",
     "#apiKey"
   ],
   "properties": {
+    "provider": {
+      "enum": [
+        "openai",
+        "azure"
+      ],
+      "type": "string",
+      "title": "Provider",
+      "default": "openai",
+      "options": {
+        "enum_titles": [
+          "OpenAI",
+          "Azure OpenAI"
+        ]
+      },
+      "propertyOrder": 1
+    },
     "model": {
       "enum": [
         "small_03",
@@ -26,12 +42,12 @@
     },
     "#apiKey": {
       "type": "string",
-      "title": "OpenAI API Key",
+      "title": "API Key",
       "format": "password",
       "default": "",
       "minLength": 1,
       "description": "API Key for embedding model",
-      "propertyOrder": 1
+      "propertyOrder": 2
     },
     "outputFormat": {
       "enum": [
@@ -47,6 +63,32 @@
       },
       "description": "Choose the output format for the embeddings",
       "propertyOrder": 3
+    },
+    "azureEndpoint": {
+      "type": "string",
+      "title": "Azure Endpoint",
+      "default": "",
+      "minLength": 1,
+      "description": "Azure OpenAI endpoint URL (e.g., https://your-resource.openai.azure.com)",
+      "propertyOrder": 3,
+      "condition": {
+        "properties": {
+          "provider": ["azure"]
+        }
+      }
+    },
+    "azureDeployment": {
+      "type": "string",
+      "title": "Azure Deployment Name",
+      "default": "",
+      "minLength": 1,
+      "description": "Name of your Azure OpenAI embedding deployment",
+      "propertyOrder": 4,
+      "condition": {
+        "properties": {
+          "provider": ["azure"]
+        }
+      }
     }
   }
 }

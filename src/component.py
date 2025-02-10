@@ -68,17 +68,17 @@ class Component(ComponentBase):
     def _get_output_table(self):
         destination_config = self.configuration.parameters['destination']
         if not (out_table_name := destination_config.get("output_table_name")):
-            out_table_name = f"app-embed-lancedb.csv"
+            out_table_name = f"openAI-embedding.csv"
         else:
             out_table_name = f"{out_table_name}.csv"
 
         return self.create_out_table_definition(out_table_name)
 
-
 if __name__ == "__main__":
     try:
         comp = Component()
         comp.execute_action()
+        logging.getLogger().setLevel(logging.WARNING)
     except UserException as exc:
         logging.exception(exc)
         exit(1)

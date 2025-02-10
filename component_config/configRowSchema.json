@@ -2,7 +2,11 @@
   "type": "object",
   "title": "Configuration",
   "required": [
+<<<<<<< HEAD
     "embedColumn"
+=======
+    "embed_column"
+>>>>>>> 6317fae0dd83b619a7a179547eadfea772bfdf59
   ],
   "properties": {
     "destination": {
@@ -35,7 +39,52 @@
         }
       }
     },
+<<<<<<< HEAD
     "embedColumn": {
+=======
+    "chunking":{
+      "type": "object",
+      "title": "Chunking",
+      "properties": {
+        "is_enabled": {
+          "type": "boolean",
+          "title": "Enable Chunking",
+          "format": "checkbox",
+          "default": false,
+          "description": "Enable chunking of input data for embedding.",
+          "propertyOrder": 2
+        },
+        "size": {
+          "type": "integer",
+          "title": "Chunk Size",
+          "default": 3,
+          "minimum": 1,
+          "description": "Number of units per chunk",
+          "propertyOrder": 3
+        },
+        "method": {
+          "enum": [
+            "words",
+            "characters"
+          ],
+          "type": "string",
+          "title": "Text Chunking Method",
+          "default": "characters",
+          "description": "Split text into chunks for embedding",
+          "propertyOrder": 4
+        }
+      }
+    },
+    "batch_size": {
+      "type": "integer",
+      "title": "Batch Size",
+      "required": true,
+      "default": 10,
+      "description": "Number of rows to send in each batch.",
+      "propertyOrder": 5
+    },
+    "embed_column": {
+>>>>>>> 6317fae0dd83b619a7a179547eadfea772bfdf59
       "type": "string",
       "title": "Embed column name",
       "watch": {
@@ -46,6 +95,10 @@
       "description": "Choose a column to embed data.",
       "propertyOrder": 1
     }
+<<<<<<< HEAD
   },
   "description": "Configuration for embedding column data"
+=======
+  }
+>>>>>>> 6317fae0dd83b619a7a179547eadfea772bfdf59
 }
