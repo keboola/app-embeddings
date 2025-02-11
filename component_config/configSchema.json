@@ -1,12 +1,24 @@
 {
   "type": "object",
-  "title": "Lance Embedder",
+  "title": "OpenAI Embedding",
   "required": [
-    "embedColumn",
-    "#apiKey",
-    "model"
+    "#apiKey"
   ],
   "properties": {
+    "provider": {
+      "enum": [
+        "openai"
+      ],
+      "type": "string",
+      "title": "Provider",
+      "default": "openai",
+      "options": {
+        "enum_titles": [
+          "OpenAI"
+        ]
+      },
+      "propertyOrder": 1
+    },
     "model": {
       "enum": [
         "small_03",
@@ -27,17 +39,17 @@
     },
     "#apiKey": {
       "type": "string",
-      "title": "OpenAI API Key",
+      "title": "API Key",
       "format": "password",
       "default": "",
       "minLength": 1,
       "description": "API Key for embedding model",
-      "propertyOrder": 1
+      "propertyOrder": 2
     },
     "outputFormat": {
       "enum": [
         "csv",
-        "lance"
+        "artifacts"
       ],
       "type": "string",
       "title": "Output Format",
@@ -45,7 +57,7 @@
       "options": {
         "enum_titles": [
           "CSV",
-          "Lance"
+          "Artifacts"
         ]
       },
       "description": "Choose the output format for the embeddings",
