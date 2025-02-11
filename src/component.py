@@ -1,3 +1,4 @@
+import os
 import csv
 import logging
 import hashlib
@@ -46,8 +47,18 @@ class Component(ComponentBase):
         fieldnames = reader.fieldnames + ['embedding', 'parent_id']
         linking_fieldnames = ['parent_id', self._configuration.embed_column]
 
-        with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file, \
-             open(linking_table.full_path, 'w', encoding='utf-8', newline='') as linking_file:
+        is_artifact_output = self._configuration.outputFormat == "artifact"
+
+        if is_artifact_output:
+            artifact_path = "/data/artifacts/out/current/embedding_artifact.csv"
+            linking_artifact_path = "/data/artifacts/out/current/linking_artifact.csv"
+            os.makedirs(os.path.dirname(artifact_path), exist_ok=True)
+        else:
+            artifact_path = output_table.full_path
+            linking_artifact_path = linking_table.full_path
+
+        with open(artifact_path, 'w', encoding='utf-8', newline='') as output_file, \
+            open(linking_artifact_path, 'w', encoding='utf-8', newline='') as linking_file:
             
             writer = csv.DictWriter(output_file, fieldnames=fieldnames)
             linking_writer = csv.DictWriter(linking_file, fieldnames=linking_fieldnames)
@@ -63,7 +74,6 @@ class Component(ComponentBase):
                     chunked_texts = self.chunk_text(text)
                     for chunk in chunked_texts:
                         batch_data.append((row.copy(), chunk, parent_id))
-
                 else:
                     batch_data.append((row, text, parent_id))
 
