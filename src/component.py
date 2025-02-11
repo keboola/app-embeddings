@@ -47,7 +47,7 @@ class Component(ComponentBase):
         fieldnames = reader.fieldnames + ['embedding', 'parent_id']
         linking_fieldnames = ['parent_id', self._configuration.embed_column]
 
-        is_artifact_output = self._configuration.outputFormat == "artifact"
+        is_artifact_output = self._configuration.outputFormat == "artifacts"
 
         if is_artifact_output:
             artifact_path = "/data/artifacts/out/current/embedding_artifact.csv"
