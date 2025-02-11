@@ -37,12 +37,21 @@ class Destination(ConfigurationBase):
     primary_keys: str
 
 @dataclass
+class Chunking(ConfigurationBase):
+    is_enabled: bool
+    size: int
+    method: str
+@dataclass
 class Configuration(ConfigurationBase):
-    embedColumn: str
+    provider: str
+    embed_column: str
     pswd_apiKey: str
     model: str
+    batch_size: int
     destination: Destination
+    chunking: Chunking
     outputFormat: str = "csv"
+
 
     def __post_init__(self):
         model_mapping = {
@@ -50,4 +59,4 @@ class Configuration(ConfigurationBase):
             "large_03": "text-embedding-3-large",
             "ada_002": "text-embedding-ada-002"
         }
-        self.model = model_mapping.get(self.model, self.model) 
+        self.model = model_mapping.get(self.model, self.model)
