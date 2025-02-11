@@ -1,9 +1,6 @@
 import csv
 import logging
-import os
-import shutil
-import zipfile
-import lancedb
+import hashlib
 
 import pyarrow as pa
 import pandas as pd
@@ -13,6 +10,7 @@ from keboola.component.exceptions import UserException
 from configuration import Configuration
 
 from openai import OpenAI
+
 class Component(ComponentBase):
     def __init__(self):
         super().__init__()
@@ -21,115 +19,151 @@ class Component(ComponentBase):
 
     def run(self):
         self.init_configuration()
-        self.init_client()
+        self.init_openai_client()
+
         try:
             input_table = self._get_input_table()
             with open(input_table.full_path, 'r', encoding='utf-8') as input_file:
                 reader = csv.DictReader(input_file)
-                if self._configuration.outputFormat == 'lance':
-                    lance_dir, table = self._initialize_lance_output(reader.fieldnames)
-                    self._process_rows_lance(reader, table)
-                elif self._configuration.outputFormat == 'csv':
-                    self._process_rows_csv(reader)
+                self._process_rows_csv(reader)
         except Exception as e:
             raise UserException(f"Error occurred during embedding process: {str(e)}")
 
-    def _initialize_lance_output(self, fieldnames):
-        lance_dir = os.path.join(self.tables_out_path, 'lance_db')
-        os.makedirs(lance_dir, exist_ok=True)
-        db = lancedb.connect(lance_dir)
-        schema = self._get_lance_schema(fieldnames)
-        table = db.create_table("embeddings", schema=schema, mode="overwrite")
-        return lance_dir, table
-
+    def _get_linking_table(self):
+        destination_config = self.configuration.parameters['destination']
+        base_output_name = destination_config.get("output_table_name", "openAI-embedding")
+        linking_table_name = f"{base_output_name}-linking.csv"
+        return self.create_out_table_definition(linking_table_name)
+        
     def _process_rows_csv(self, reader):
         output_table = self._get_output_table()
-        with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file:
-            fieldnames = reader.fieldnames + ['embedding']
-            writer = csv.DictWriter(output_file, fieldnames=fieldnames)
-            writer.writeheader()
-            self.row_count = 0
-            for row in reader:
-                self.row_count += 1
-                text = row[self._configuration.embedColumn]
-                embedding = self.get_embedding(text)
-                row['embedding'] = embedding
-                writer.writerow(row)
-                
-    def _process_rows_lance(self, reader, table, lance_dir):
-        data = []
-        self.row_count = 0
-        for row in reader:
-            self.row_count += 1
-            text = row[self._configuration.embedColumn]
-            embedding = self.get_embedding(text)
-            lance_row = {**row, 'embedding': embedding}
-            data.append(lance_row)
-            if self.row_count % 1000 == 0:
-                table.add(data)
-                data = []
-        if data:
-            table.add(data)
-        self._finalize_lance_output(lance_dir)
+        linking_table = self._get_linking_table()
 
-        
+        batch_size = self._configuration.batch_size
+        batch_data = []
+        linking_data = []
+
+        fieldnames = reader.fieldnames + ['embedding', 'parent_id']
+        linking_fieldnames = ['parent_id', self._configuration.embed_column]
+
+        with open(output_table.full_path, 'w', encoding='utf-8', newline='') as output_file, \
+             open(linking_table.full_path, 'w', encoding='utf-8', newline='') as linking_file:
+            
+            writer = csv.DictWriter(output_file, fieldnames=fieldnames)
+            linking_writer = csv.DictWriter(linking_file, fieldnames=linking_fieldnames)
+
+            writer.writeheader()
+            linking_writer.writeheader()
+
+            for row in reader:
+                text = row[self._configuration.embed_column]
+                parent_id = self.generate_hash(text)
+
+                if self._configuration.chunking.is_enabled:
+                    chunked_texts = self.chunk_text(text)
+                    for chunk in chunked_texts:
+                        batch_data.append((row.copy(), chunk, parent_id))
+
+                else:
+                    batch_data.append((row, text, parent_id))
+
+                linking_data.append({'parent_id': parent_id, self._configuration.embed_column: text})
+
+                if len(batch_data) >= batch_size:
+                    self._process_batch(batch_data, writer)
+                    batch_data.clear()
+
+            if batch_data:
+                self._process_batch(batch_data, writer)
+
+            linking_writer.writerows(linking_data)
+
+    def _process_batch(self, batch_data, writer):
+        texts = [text for _, text, _ in batch_data]
+        embeddings = self.get_batch_embeddings(texts)
+
+        for i, (row, text, parent_id) in enumerate(batch_data):
+            row['embedding'] = embeddings[i] if embeddings[i] else "[]"
+            row['parent_id'] = parent_id
+            row[self._configuration.embed_column] = text
+            writer.writerow(row)
+
+    def chunk_text(self, text):
+        """
+        Splits text into smaller chunks based on the configured method.
+        """
+        chunk_size = self._configuration.chunking.size
+        chunk_method = self._configuration.chunking.method
+
+        chunks = []
+        if chunk_method == "words":
+            words = text.split()
+            for i in range(0, len(words), chunk_size):
+                chunks.append(" ".join(words[i:i + chunk_size]))
+        elif chunk_method == "characters":
+            for i in range(0, len(text), chunk_size):
+                chunks.append(text[i:i + chunk_size])
+        else:
+            chunks.append(text)
+
+        return chunks
+
+    def get_batch_embeddings(self, texts):
+        """
+        Calls OpenAI or Azure OpenAI embedding API in batch mode.
+        """
+        try:
+            if self._configuration.provider == "openai":
+                response = self.client.embeddings.create(
+                    input=texts, model=self._configuration.model
+                )
+            elif self._configuration.provider == "azure":
+                response = self.client.embeddings.create(
+                    input=texts, model=self._configuration.model
+                )
+            return [item.embedding for item in response.data]
+        except Exception as e:
+            logging.error(f"Failed batch embedding: {e}")
+            return [[] for _ in texts]
+
+    def generate_hash(self, text):
+        return hashlib.sha256(text.encode('utf-8')).hexdigest()
+
     def init_configuration(self):
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
         self._configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
 
-    def init_client(self):
-        self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
+    def init_openai_client(self):
+        if self._configuration.provider == "openai":
+            self.client = OpenAI(api_key=self._configuration.pswd_apiKey)
+        elif self._configuration.provider == "azure":
+            self.client = OpenAI(
+                api_key=self._configuration.pswd_apiKey,
+                base_url=f"{self._configuration.azureEndpoint}/openai/deployments/{self._configuration.azureDeployment}"
+            )
 
-    def get_embedding(self, text):
-        try:
-            response = self.client.embeddings.create(input=[text], model=self._configuration.model)
-            return response.data[0].embedding
-        except Exception as e:
-            raise UserException(f"Error getting embedding: {str(e)}")
-        
     def _get_input_table(self):
         if not self.get_input_tables_definitions():
             raise UserException("No input table specified. Please provide one input table in the input mapping!")
         if len(self.get_input_tables_definitions()) > 1:
             raise UserException("Only one input table is supported")
         return self.get_input_tables_definitions()[0]
-    
-    def _get_output_table(self):        
+
+    def _get_output_table(self):
         destination_config = self.configuration.parameters['destination']
         if not (out_table_name := destination_config.get("output_table_name")):
-            out_table_name = f"app-embed-lancedb.csv"
+            out_table_name = f"openAI-embedding.csv"
         else:
             out_table_name = f"{out_table_name}.csv"
 
         return self.create_out_table_definition(out_table_name)
-    
-    def _get_lance_schema(self, fieldnames):
-        schema = pa.schema([
-            (name, pa.string()) for name in fieldnames
-        ] + [('embedding', pa.list_(pa.float32()))])
-        return schema
-    
-    def _finalize_lance_output(self, lance_dir):
-        print("Zipping the Lance directory")
-        try:
-            zip_path = os.path.join(self.files_out_path, 'embeddings_lance.zip')
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for root, dirs, files in os.walk(lance_dir):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        arcname = os.path.relpath(file_path, lance_dir)
-                        zipf.write(file_path, arcname)
-            print(f"Successfully zipped Lance directory to {zip_path}")
-            # Remove the original Lance directory
-            shutil.rmtree(lance_dir)
-        except Exception as e:
-            print(f"Error zipping Lance directory: {e}")
-            raise
+        
 
 if __name__ == "__main__":
     try:
         comp = Component()
         comp.execute_action()
+        logging.getLogger().setLevel(logging.WARNING)
     except UserException as exc:
         logging.exception(exc)
         exit(1)
