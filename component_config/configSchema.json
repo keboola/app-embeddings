@@ -18,20 +18,17 @@
       "default": "small_03",
       "options": {
         "enum_titles": [
-          "text-embedding-3-small",
-          "text-embedding-3-large",
-          "text-embedding-ada-002"
         ]
       },
       "propertyOrder": 2
     },
     "#apiKey": {
       "type": "string",
-      "title": "OpenAI API Key",
+      "title": "OpenAI API key",
       "format": "password",
       "default": "",
       "minLength": 1,
-      "description": "API Key for embedding model",
+      "description": "API key for embedding model",
       "propertyOrder": 1
     },
     "outputFormat": {
@@ -40,15 +37,15 @@
         "lance"
       ],
       "type": "string",
-      "title": "Output Format",
+      "title": "Output format",
       "default": "csv",
       "options": {
         "enum_titles": [
-          "CSV",
+          "csv",
           "Lance"
         ]
       },
-      "description": "Choose the output format for the embeddings",
+      "description": "Choose the output format for the embeddings.",
       "propertyOrder": 3
     }
   }

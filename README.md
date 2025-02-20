@@ -1,6 +1,6 @@
 # Embedding Transformation
 
-This component allows you to embed tables using OpenAI embedding algorithms with data provided from your KBC project.
+This component allows you to embed tables using OpenAI embedding algorithms with data provided from your Keboola project.
 
 - [TOC]
 
@@ -14,21 +14,22 @@ This component allows you to embed tables using OpenAI embedding algorithms with
 
 - **API Key (`#api_token`):** Obtain your API key from the [OpenAI platform settings](https://platform.openai.com/account/api-keys).
 
-### Other options:
-- **Column to Embed (`embed_column`)**: Specify the column that contains the text data to be embedded.
+### Other Options:
+- **Column to Embed (`embed_column`):** Specify the column that contains the text data to be embedded.
 - **Embedding Model (`model`):** The model that will generate the embeddings. Choose from:
   - `text-embedding-3-small`
   - `text-embedding-3-large`
   - `text-embedding-ada-002` [Learn more](https://platform.openai.com/docs/models/embeddings).
-- **Output Format (`output_format`):** Determines if embeddings will be sent to a zipped Lance file or to a Keboola Table (CSV).
-- **Incremental Load (`incremental load`):** If enabled, the table will update instead of being overwritten.
+- **Output Format (`output_format`):** Determines if embeddings will be sent to a zipped Lance file or to a Keboola table (CSV).
+- **Incremental Load (`incremental load`):** If enabled, the table will be updated instead of overwritten.
 - **Output Table Name (`output_table_name`)**
 - **Primary Keys (`primary_keys`):**
+
 ---
 
 ### Component Configuration Example
 
-**Generic configuration**
+**Generic Configuration**
 
 ```json
 {
@@ -41,7 +42,7 @@ This component allows you to embed tables using OpenAI embedding algorithms with
 
 This configuration uses the `ada_002` model to embed the `description` column and outputs the result in CSV format.
 
-**Row configuration**
+**Row Configuration**
 
 ```json
 {
@@ -68,7 +69,7 @@ volumes:
   - ./CUSTOM_FOLDER:/data
 ```
 
-Clone this repository, initialize the workspace, and run the component with the following command:
+Clone this repository, initialize the workspace, and run the component with the following commands:
 
 ```
 git clone git@github.com:keboola/app-transformation-lanceDB-embeddings.git
@@ -87,4 +88,4 @@ docker-compose run --rm test
 
 # Integration
 
-For information about deployment and integration with KBC, please refer to the [deployment section of developers documentation](https://developers.keboola.com/extend/component/deployment/).
+For information about deployment and integration with Keboola, please refer to the [deployment section of the developer documentation](https://developers.keboola.com/extend/component/deployment/).
